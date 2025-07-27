@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订阅链接生成器</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #4285f4;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        textarea {
+            min-height: 80px;
+            font-family: monospace;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #4285f4;
+            word-break: break-all;
+        }
+        .log {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        .log-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .copy-btn {
+            background-color: #34a853;
+        }
+        .copy-btn:hover {
+            background-color: #2d9248;
+        }
+        .btn-group {
+            margin-top: 15px;
+        }
+        .success-message {
+            color: #34a853;
+            margin-left: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>订阅链接生成器</h1>
+        
+        <div class="input-group">
+            <label for="baseUrl">基础URL:</label>
+            <input type="text" id="baseUrl" value="https://sing-box-subscribe-doraemon.vercel.app/config/" readonly>
+        </div>
+        
+        <div class="input-group">
+            <label for="urlParam">URL参数 (支持任意长度网络链接):</label>
+            <textarea id="urlParam" placeholder="请输入完整的URL参数，例如: https://example.com/subscribe?token=abc123"></textarea>
+        </div>
+        
+        <div class="btn-group">
+            <button id="generateBtn">生成链接</button>
+            <button id="clearBtn">清空输入</button>
+        </div>
+        
+        <div id="resultContainer" class="result" style="display: none;">
+            <div id="generatedUrl"></div>
+            <div class="btn-group">
+                <button id="copyBtn" class="copy-btn">复制链接</button>
+                <span id="copySuccess" class="success-message">已复制!</span>
+            </div>
+        </div>
+        
+        <div class="log">
+            <div class="log-title">操作日志:</div>
+            <div id="logContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const baseUrlInput = document.getElementById('baseUrl');
+            const urlParamInput = document.getElementById('urlParam');
+            const generateBtn = document.getElementById('generateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const resultContainer = document.getElementById('resultContainer');
+            const generatedUrl = document.getElementById('generatedUrl');
+            const copyBtn = document.getElementById('copyBtn');
+            const copySuccess = document.getElementById('copySuccess');
+            const logContent = document.getElementById('logContent');
+            
+            // 生成链接
+            generateBtn.addEventListener('click', function() {
+                const baseUrl = baseUrlInput.value;
+                const urlParam = urlParamInput.value.trim();
+                
+                if (!urlParam) {
+                    addLog('错误: URL参数不能为空');
+                    alert('请输入URL参数');
+                    return;
+                }
+                
+                try {
+                    // 确保URL格式正确
+                    if (!isValidUrl(urlParam)) {
+                        addLog('警告: 输入的参数不是有效的URL格式，但仍将继续处理');
+                    }
+                    
+                    // 编码整个URL参数
+                    const encodedParam = encodeURIComponent(urlParam);
+                    const fullUrl = baseUrl + encodedParam;
+                    generatedUrl.textContent = fullUrl;
+                    resultContainer.style.display = 'block';
+                    
+                    addLog(`成功生成链接: ${fullUrl}`);
+                } catch (error) {
+                    addLog(`错误: 生成链接时出错 - ${error.message}`);
+                    alert('生成链接时出错，请检查输入');
+                }
+            });
+            
+            // 清空输入
+            clearBtn.addEventListener('click', function() {
+                urlParamInput.value = '';
+                resultContainer.style.display = 'none';
+                copySuccess.style.display = 'none';
+                addLog('已清空输入框');
+            });
+            
+            // 复制链接
+            copyBtn.addEventListener('click', function() {
+                const textToCopy = generatedUrl.textContent;
+                navigator.clipboard.writeText(textToCopy).then(function() {
+                    addLog('链接已复制到剪贴板');
+                    copySuccess.style.display = 'inline';
+                    setTimeout(function() {
+                        copySuccess.style.display = 'none';
+                    }, 2000);
+                }, function(err) {
+                    addLog(`错误: 复制失败 - ${err}`);
+                    alert('复制失败，请手动复制');
+                });
+            });
+            
+            // 添加日志
+            function addLog(message) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.textContent = `[${timeString}] ${message}`;
+                logContent.appendChild(logEntry);
+                logContent.scrollTop = logContent.scrollHeight;
+            }
+            
+            // 简单验证URL格式
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+            
+            // 初始日志
+            addLog('订阅链接生成器已就绪');
+            addLog('提示: 可以输入任意长度的URL作为参数');
+        });
+    </script>
+</body>
+</html>

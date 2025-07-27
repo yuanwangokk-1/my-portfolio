@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clash 订阅转换工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --dark: #2d3436;
+            --light: #f5f6fa;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #d63031;
+            --info: #0984e3;
+            --card-bg: #3d3d3d;
+            --input-bg: #4a4a4a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1s;
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        
+        .subtitle {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s;
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--input-bg);
+            border: 2px solid #555;
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a4dcf;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: var(--input-bg);
+            color: var(--light);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #555;
+            transform: translateY(-2px);
+        }
+        
+        .output-container {
+            position: relative;
+        }
+        
+        .output {
+            width: 100%;
+            min-height: 80px;
+            padding: 15px;
+            background-color: var(--input-bg);
+            border: 2px solid #555;
+            border-radius: 8px;
+            color: var(--light);
+            font-family: 'Consolas', monospace;
+            word-break: break-all;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+        
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) var(--card-bg);
+        }
+        
+        .log-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .log-container::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+        
+        .log-container::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .log-entry {
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            background-color: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+        }
+        
+        .log-time {
+            color: var(--secondary);
+            font-size: 0.8rem;
+            margin-right: 10px;
+            min-width: 70px;
+        }
+        
+        .log-message {
+            flex: 1;
+        }
+        
+        .success {
+            color: var(--success);
+        }
+        
+        .error {
+            color: var(--danger);
+        }
+        
+        .info {
+            color: var(--info);
+        }
+        
+        .warning {
+            color: var(--warning);
+        }
+        
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--success);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.3s, fadeOut 0.5s 2s forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        @media (max-width: 768px) {
+            .btn {
+                flex: 100%;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Clash 订阅转换工具</h1>
+            <p class="subtitle">将您的订阅链接转换为带 ACL4SSR 规则的 Clash 配置</p>
+        </header>
+        
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-cog"></i>
+                <span>转换设置</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="sub-url">
+                    订阅链接 (URL)
+                    <div class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">请输入您的原始订阅链接 (SS/SSR/V2Ray/Trojan 等)</span>
+                    </div>
+                </label>
+                <input type="text" id="sub-url" placeholder="例如: https://your-subscription.com/link">
+            </div>
+            
+            <div class="form-group">
+                <label for="config-rule">
+                    规则配置
+                    <div class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">ACL4SSR 规则集，全量版包含完整分流规则</span>
+                    </div>
+                </label>
+                <input type="text" id="config-rule" value="https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/refs/heads/master/Clash/config/ACL4SSR_Online_Full.ini" readonly>
+            </div>
+            
+            <div class="btn-group">
+                <button id="generate-btn" class="btn btn-primary">
+                    <i class="fas fa-magic"></i>
+                    生成 Clash 订阅
+                </button>
+                <button id="copy-btn" class="btn btn-secondary">
+                    <i class="far fa-copy"></i>
+                    复制链接
+                </button>
+                <button id="open-btn" class="btn btn-secondary">
+                    <i class="fas fa-external-link-alt"></i>
+                    新标签页打开
+                </button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-link"></i>
+                <span>生成结果</span>
+            </div>
+            
+            <div class="form-group output-container">
+                <label>转换后的订阅链接</label>
+                <div class="output" id="output">
+                    生成的订阅链接将显示在这里...
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-terminal"></i>
+                <span>操作日志</span>
+            </div>
+            
+            <div class="log-container" id="log">
+                <div class="log-entry">
+                    <span class="log-time">[系统]</span>
+                    <span class="log-message info">准备好生成 Clash 订阅链接</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="copy-notification" id="copy-notification">
+            <i class="fas fa-check-circle"></i>
+            链接已复制到剪贴板！
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const subUrlInput = document.getElementById('sub-url');
+            const configRuleInput = document.getElementById('config-rule');
+            const generateBtn = document.getElementById('generate-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            const openBtn = document.getElementById('open-btn');
+            const outputDiv = document.getElementById('output');
+            const logDiv = document.getElementById('log');
+            const copyNotification = document.getElementById('copy-notification');
+            
+            // 添加日志
+            function addLog(message, type = 'info', icon = null) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'log-time';
+                timeSpan.textContent = `[${timeStr}]`;
+                
+                const messageSpan = document.createElement('span');
+                messageSpan.className = `log-message ${type}`;
+                
+                if (icon) {
+                    const iconSpan = document.createElement('i');
+                    iconSpan.className = `fas fa-${icon}`;
+                    iconSpan.style.marginRight = '8px';
+                    messageSpan.appendChild(iconSpan);
+                }
+                
+                messageSpan.appendChild(document.createTextNode(message));
+                logEntry.appendChild(timeSpan);
+                logEntry.appendChild(messageSpan);
+                logDiv.appendChild(logEntry);
+                
+                // 自动滚动到底部
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+            
+            // 生成订阅链接
+            generateBtn.addEventListener('click', function() {
+                const subUrl = subUrlInput.value.trim();
+                const configRule = configRuleInput.value.trim();
+                
+                if (!subUrl) {
+                    addLog('错误：请先输入订阅链接', 'error', 'exclamation-circle');
+                    outputDiv.textContent = '错误：请先输入订阅链接';
+                    outputDiv.style.color = 'var(--danger)';
+                    return;
+                }
+                
+                try {
+                    // 构建转换链接
+                    const convertedUrl = `https://url.v1.mk/sub?target=clash&url=${encodeURIComponent(subUrl)}&insert=false&config=${encodeURIComponent(configRule)}&emoji=true&list=false&xudp=false&udp=false&tfo=false&expand=true&scv=false&fdn=false&new_name=true`;
+                    
+                    outputDiv.textContent = convertedUrl;
+                    outputDiv.style.color = 'var(--light)';
+                    addLog('成功生成 Clash 订阅链接', 'success', 'check-circle');
+                    
+                    // 按钮动画
+                    generateBtn.innerHTML = '<i class="fas fa-check"></i> 生成成功';
+                    generateBtn.style.backgroundColor = 'var(--success)';
+                    setTimeout(() => {
+                        generateBtn.innerHTML = '<i class="fas fa-magic"></i> 生成 Clash 订阅';
+                        generateBtn.style.backgroundColor = 'var(--primary)';
+                    }, 2000);
+                } catch (error) {
+                    addLog(`生成链接时出错: ${error.message}`, 'error', 'times-circle');
+                    outputDiv.textContent = `错误：${error.message}`;
+                    outputDiv.style.color = 'var(--danger)';
+                }
+            });
+            
+            // 复制链接
+            copyBtn.addEventListener('click', function() {
+                const textToCopy = outputDiv.textContent;
+                
+                if (!textToCopy || textToCopy === '生成的订阅链接将显示在这里...' || textToCopy.startsWith('错误：')) {
+                    addLog('没有可复制的内容或内容无效', 'warning', 'exclamation-triangle');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(textToCopy)
+                    .then(() => {
+                        addLog('链接已复制到剪贴板', 'success', 'clipboard-check');
+                        
+                        // 显示通知
+                        copyNotification.style.display = 'flex';
+                        copyNotification.style.alignItems = 'center';
+                        setTimeout(() => {
+                            copyNotification.style.display = 'none';
+                        }, 2500);
+                        
+                        // 按钮动画
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i> 复制成功';
+                        copyBtn.style.backgroundColor = 'var(--success)';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<i class="far fa-copy"></i> 复制链接';
+                            copyBtn.style.backgroundColor = 'var(--input-bg)';
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        addLog(`复制失败: ${err}`, 'error', 'times-circle');
+                    });
+            });
+            
+            // 新标签页打开
+            openBtn.addEventListener('click', function() {
+                const url = outputDiv.textContent;
+                
+                if (!url || url === '生成的订阅链接将显示在这里...' || url.startsWith('错误：')) {
+                    addLog('没有可打开的链接或链接无效', 'warning', 'exclamation-triangle');
+                    return;
+                }
+                
+                if (!url.startsWith('http')) {
+                    addLog('无效的链接格式', 'error', 'times-circle');
+                    return;
+                }
+                
+                window.open(url, '_blank');
+                addLog('已在新标签页打开链接', 'info', 'external-link-alt');
+                
+                // 按钮动画
+                openBtn.innerHTML = '<i class="fas fa-check"></i> 已打开';
+                openBtn.style.backgroundColor = 'var(--info)';
+                setTimeout(() => {
+                    openBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> 新标签页打开';
+                    openBtn.style.backgroundColor = 'var(--input-bg)';
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
